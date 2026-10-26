@@ -84,7 +84,8 @@ const opslag = {
   weg(k){ try{ localStorage.removeItem("rooster-"+k); }catch(e){} }
 };
 let K = opslag.lees("koppeling", null);       // {school, token}
-const st = {q:"", res:[], sel:null, van:null, dag:0, rooster:null, fout:"", favs: opslag.lees("favorieten", []), mijnKlassen: opslag.lees("mijnklassen", [])};
+let IK = opslag.lees("ik", null);             // wie 'Mijn rooster' is: {soort, code, naam}, de eerste keer zelf gekozen
+const st = {q:"", res:[], sel:null, van:null, dag:0, rooster:null, fout:"", favs: opslag.lees("favorieten", []), mijnKlassen: opslag.lees("mijnklassen", []), kiesIk:false, ikQ:"", ikRes:[]};
 
 // ---------------------------------------------------------------- Zermelo
 const basis = () => `https://${K.school}.zportal.nl/api/v3`;
@@ -222,7 +223,8 @@ async function mijnKlassenLaden(){
   // klassen uit je eigen rooster van deze week, als snelknoppen
   try{
     const ma = maandag(new Date()), s = Math.floor(ma/1000), e = s + 7*86400;
-    const r = await zget("appointments", {user:"~me", start:s, end:e, valid:"true", fields:"groups"});
+    if(!IK || IK.soort !== "collega"){ st.mijnKlassen = []; opslag.zet("mijnklassen", []); return; }
+    const r = await zget("appointments", {user:IK.code, start:s, end:e, valid:"true", fields:"groups"});
     const namen = [...new Set(r.flatMap(a=>a.groups||[]))].sort();
     const L = LIJSTEN || {kl:[]};
     st.mijnKlassen = namen.map(n=>{ const g = L.kl.find(k=>norm(k[1])===norm(n)); return g ? {soort:"klas", code:g[0], naam:n} : null; }).filter(Boolean);
@@ -231,19 +233,37 @@ async function mijnKlassenLaden(){
 }
 let zt = null;
 function zoek(q){ st.q = q; clearTimeout(zt); zt = setTimeout(()=>{ st.res = q.trim().length >= 2 ? zoekIn(q) : []; tekenLijst(); }, 120); }
+function mijnRooster(){ if(IK) return toon(IK); st.kiesIk = true; st.ikQ = ""; st.ikRes = []; teken(); }
+function tekenKiesIk(){
+  $("#app").innerHTML = `<h1>Wie ben jij?</h1>
+    <p class="leeg" style="text-align:left;margin:0 0 12px">Zoek jezelf op naam of docentcode. Daarna opent <b>Mijn rooster</b> op deze telefoon altijd jouw rooster. Je kunt dit later wijzigen onderaan het scherm.</p>
+    <input id="iq" type="search" placeholder="Je naam of docentcode" value="${esc(st.ikQ)}" oninput="zoekIk(this.value)" autocomplete="off" autocapitalize="off" ${LIJSTEN?"":"disabled"}>
+    <div id="ikres"></div>
+    ${LIJSTEN?"":`<div class="leeg" style="margin-top:12px">Lijsten ophalen uit Zermelo…</div>`}
+    <div class="voet"><a href="#" onclick="st.kiesIk=false;teken();return false">Annuleren</a></div>`;
+  tekenIkLijst(); const i = $("#iq"); if(i) i.focus();
+}
+function zoekIk(q){ st.ikQ = q; st.ikRes = q.trim().length >= 2 ? zoekIn(q).filter(x=>x.soort==="collega"||x.soort==="leerling") : []; tekenIkLijst(); }
+function tekenIkLijst(){
+  const el = $("#ikres"); if(!el) return;
+  el.innerHTML = st.ikRes.length ? `<div class="lijst" style="margin-top:10px">${st.ikRes.map((x,i)=>`<button class="rij" onclick="kiesIk(${i})"><span class="tag">${esc(x.soort==="collega"?"docent":x.soort)}</span><b>${esc(x.naam)}</b><span class="x">${esc(x.code)}</span></button>`).join("")}</div>`
+    : st.ikQ.trim().length >= 2 && LIJSTEN ? `<div class="leeg" style="margin-top:10px">Niets gevonden</div>` : "";
+}
+function kiesIk(i){ const x = st.ikRes[i]; if(!x) return; IK = {soort:x.soort, code:x.code, naam:x.naam}; opslag.zet("ik", IK); st.kiesIk = false; mijnKlassenLaden(); toon(IK); }
 function teken(){
   if(!K) return setup();
+  if(st.kiesIk) return tekenKiesIk();
   if(st.sel) return tekenRooster();
   if(st.q.trim().length < 2) st.res = [];
   const laden = !LIJSTEN;
-  $("#app").innerHTML = `<h1>Rooster <button class="klein ik" onclick="toon({soort:'ik',code:'~me',naam:'Mijn rooster'})">Mijn rooster</button></h1>
+  $("#app").innerHTML = `<h1>Rooster <button class="klein ik" onclick="mijnRooster()">Mijn rooster</button></h1>
     <input id="q" type="search" placeholder="Naam, docentcode, klas of lokaal" value="${esc(st.q)}" oninput="zoek(this.value)" autocomplete="off" autocapitalize="off" ${laden?"disabled":""}>
     ${favsHtml()}
     <div id="res"></div>
     ${st.mijnKlassen.length && !st.q ? `<div class="kop">Mijn klassen</div><div class="chips" style="padding-top:4px">${st.mijnKlassen.map((k,i)=>`<button class="chip" onclick="toon(st.mijnKlassen[${i}])">${esc(k.naam)}</button>`).join("")}</div>` : ""}
     ${laden ? `<div class="leeg" style="margin-top:12px">Lijsten ophalen uit Zermelo…</div>` : ""}
     ${st.fout ? `<div class="fout">${esc(st.fout)}</div>` : ""}
-    <div class="voet"><a href="#" onclick="ververs();return false">Lijsten verversen</a> &nbsp;·&nbsp; <a href="#" onclick="ontkoppel();return false">Ontkoppelen</a></div>`;
+    <div class="voet">${IK?`Mijn rooster: ${esc(IK.naam)} · <a href="#" onclick="IK=null;opslag.weg('ik');mijnRooster();return false">wijzigen</a><br>`:""}<a href="#" onclick="ververs();return false">Lijsten verversen</a> &nbsp;·&nbsp; <a href="#" onclick="ontkoppel();return false">Ontkoppelen</a></div>`;
   tekenLijst();
 }
 function favsHtml(){
@@ -260,11 +280,11 @@ function tekenLijst(){
     : st.q.trim().length >= 2 && LIJSTEN ? `<div class="leeg" style="margin-top:10px">Niets gevonden</div>` : "";
 }
 async function ververs(){ LIJSTEN = null; teken(); try{ await lijsten(true); }catch(e){ return fout(e); } teken(); }
-function ontkoppel(){ opslag.weg("koppeling"); opslag.weg("lijsten"); K = null; LIJSTEN = null; setup(); }
+function ontkoppel(){ opslag.weg("koppeling"); opslag.weg("lijsten"); opslag.weg("ik"); opslag.weg("mijnklassen"); IK = null; st.mijnKlassen = []; K = null; LIJSTEN = null; setup(); }
 function toon(x){ st.sel = x; st.van = maandag(new Date()); const n = new Date(); st.dag = (n.getDay()===0||n.getDay()===6) ? 0 : n.getDay()-1; laad(); }
 async function laad(){
   st.rooster = null; st.fout = ""; tekenRooster();
-  try{ st.rooster = await rooster(st.sel.soort === "ik" ? {soort:"collega", code:"~me"} : st.sel, st.van); }
+  try{ st.rooster = await rooster(st.sel, st.van); }
   catch(e){ if(e.message === "koppeling") return fout(e); st.rooster = {}; st.fout = e.message === "Geen rechten" ? "Geen rechten om dit rooster te zien." : e.message; }
   tekenRooster();
 }
