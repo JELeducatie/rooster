@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rooster">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#2F6FE4">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>Rooster</title>
+<style>
+:root{--c:#2F6FE4;--cb:#E8F0FD;--ink:#1d2433;--muted:#6b7385;--line:#E3E7EF;--soft:#F4F6FA;--card:#fff;--err:#B83430;--errb:#F7E3E2;--warn:#9A6100;--warnb:#F8EDD8}
+@media (prefers-color-scheme: dark){:root{--c:#6A9BFF;--cb:#1E2B45;--ink:#E8ECF4;--muted:#98A1B3;--line:#2A3242;--soft:#11151C;--card:#1A1F29;--err:#FF9C95;--errb:#3A1F1E;--warn:#F2C26B;--warnb:#3A2E17;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--soft);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+body{padding:calc(env(safe-area-inset-top) + 12px) max(14px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 28px) max(14px, env(safe-area-inset-left))}
+h1{font-size:28px;margin:4px 2px 12px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+h1 .ik{margin-left:auto}
+input{font:inherit;font-size:17px;width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);outline:none}
+input:focus{border-color:var(--c)}
+button{font:inherit;cursor:pointer;color:inherit}
+.knop{border:0;border-radius:14px;background:var(--c);color:#fff;font-weight:800;font-size:17px;padding:14px;width:100%}
+.klein{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:15px;font-weight:700}
+.chip.on{background:var(--c);border-color:var(--c);color:#fff}
+.kop{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 4px 4px}
+.lijst{background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.rij{display:flex;align-items:center;gap:10px;padding:13px 15px;border:0;border-bottom:1px solid var(--line);font-size:16px;width:100%;background:none;text-align:left}
+.rij:last-child{border-bottom:0}
+.rij .tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--c);background:var(--cb);border-radius:6px;padding:3px 7px;flex:none}
+.rij b{font-weight:800} .rij span.x{margin-left:auto;color:var(--muted);font-size:14px;white-space:nowrap}
+.wie{display:flex;align-items:center;gap:10px;margin:6px 2px 12px}
+.wie h2{margin:0;font-size:22px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ster{border:0;background:none;font-size:26px;line-height:1;padding:4px 6px;color:var(--muted)}
+.ster.on{color:#E8A400}
+.dagen{display:grid;grid-template-columns:auto repeat(5,1fr) auto;gap:6px;align-items:center;margin-bottom:12px}
+.dagen button{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 0;font-size:13px;font-weight:700;line-height:1.2}
+.dagen button.on{background:var(--c);border-color:var(--c);color:#fff}
+.dagen button.vandaag:not(.on){border-color:var(--c)}
+.dagen .pijl{padding:8px 10px;color:var(--muted)}
+.les{display:grid;grid-template-columns:58px 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 15px;margin-bottom:8px}
+.les .t{font-weight:800;font-size:16px;line-height:1.3;font-variant-numeric:tabular-nums} .les .t small{display:block;font-weight:600;color:var(--muted);font-size:13px}
+.les .w{font-weight:800;font-size:17px}
+.les .uur{font-weight:600;font-size:13px;color:var(--muted);margin-left:4px}
+.les .d{color:var(--muted);font-size:14px;margin-top:3px}
+.les.weg{opacity:.55} .les.weg .w{text-decoration:line-through}
+.les.nu{border-color:var(--c);box-shadow:0 0 0 3px var(--cb)}
+.wijz{display:inline-block;margin-top:5px;font-size:12.5px;font-weight:700;color:var(--warn);background:var(--warnb);border-radius:6px;padding:2px 7px}
+.leeg{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:22px;text-align:center;color:var(--muted)}
+.fout{background:var(--errb);color:var(--err);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:15px}
+.hint{color:var(--muted);font-size:14px;line-height:1.5}
+.setup{max-width:380px;margin:10vh auto 0}
+.setup label{display:block;font-weight:700;font-size:14px;margin:14px 2px 6px}
+.setup ol{padding-left:20px;margin:6px 0 0}
+.voet{margin-top:28px;text-align:center}
+.voet a{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+// Rooster: Zermelo-roosters zoeken op je telefoon. Praat rechtstreeks met Zermelo (zoals de webapp);
+// de koppeling (sleutel) blijft alleen op deze telefoon.
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DAG = ["zo","ma","di","wo","do","vr","za"];
+const opslag = {
+  lees(k, d){ try{ const v = localStorage.getItem("rooster-"+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  zet(k, v){ try{ localStorage.setItem("rooster-"+k, JSON.stringify(v)); }catch(e){} },
+  weg(k){ try{ localStorage.removeItem("rooster-"+k); }catch(e){} }
+};
+let K = opslag.lees("koppeling", null);       // {school, token}
+const st = {q:"", res:[], sel:null, van:null, dag:0, rooster:null, fout:"", favs: opslag.lees("favorieten", []), mijnKlassen: opslag.lees("mijnklassen", [])};
+
+// ---------------------------------------------------------------- Zermelo
+const basis = () => `https://${K.school}.zportal.nl/api/v3`;
+class ZFout extends Error {}
+async function zget(pad, params){
+  const q = new URLSearchParams(params || {}).toString();
+  let r;
+  try{ r = await fetch(`${basis()}/${pad}${q ? "?"+q : ""}`, {headers:{"Authorization":"Bearer "+K.token}}); }
+  catch(e){ throw new ZFout("Geen verbinding met Zermelo"); }
+  if(r.status === 401){ throw new ZFout("koppeling"); }
+  if(r.status === 403) throw new ZFout("Geen rechten");
+  if(!r.ok) throw new ZFout("Zermelo gaf fout " + r.status);
+  const j = await r.json(); return (j.response || {}).data || [];
+}
+async function koppel(school, code){
+  school = school.trim().toLowerCase().replace(/\.zportal\.nl.*$/,"").replace(/^https?:\/\//,"");
+  code = code.replace(/\s+/g, "");
+  const r = await fetch(`https://${school}.zportal.nl/api/v3/oauth/token`, {method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:`grant_type=authorization_code&code=${encodeURIComponent(code)}`});
+  if(!r.ok) throw new ZFout("Zermelo accepteert de code niet. Maak een nieuwe code aan.");
+  const j = await r.json(); K = {school, token: j.access_token}; opslag.zet("koppeling", K);
+}
+function schooljaar(){ const n = new Date(); return n.getMonth() >= 7 ? n.getFullYear() : n.getFullYear() - 1; }
+async function schooljaren(){
+  for(const p of [{year: schooljaar(), archived:"false", fields:"id,year"}, {archived:"false", fields:"id,year"}]){
+    try{ const r = await zget("schoolsinschoolyears", p); const ids = r.filter(x=>x.id && (x.year ?? schooljaar()) === schooljaar()).map(x=>x.id); if(ids.length) return ids; }catch(e){ if(e.message === "koppeling") throw e; }
+  }
+  return [];
+}
+// per school-in-schooljaar ophalen; een scholengroep heeft er meerdere, je mag er meestal één zien
+async function perJaar(ids, pad, params){
+  let uit = [], gelukt = false, fout = null;
+  for(const id of ids){ try{ uit = uit.concat(await zget(pad, {...params, schoolInSchoolYear:id})); gelukt = true; }catch(e){ if(e.message === "koppeling") throw e; fout = e; } }
+  if(!gelukt && fout) throw fout; return uit;
+}
+async function probeer(...pogingen){ for(const f of pogingen){ try{ const r = await f(); if(r && r.length) return r; }catch(e){ if(e.message === "koppeling") throw e; } } return []; }
+let LIJSTEN = null;
+async function lijsten(vers){
+  const c = opslag.lees("lijsten", null);
+  if(!vers && c && Date.now() - c.t < 12*3600e3 && c.school === K.school){ LIJSTEN = c; return c; }
+  const ids = await schooljaren();
+  const naamV = "archived,code,firstName,prefix,lastName";
+  const [lln, mw, kl, lok] = await Promise.all([
+    probeer(()=>perJaar(ids, "users", {archived:"false", isStudent:"true", fields:naamV}), ()=>zget("users", {archived:"false", isStudent:"true", fields:naamV})),
+    probeer(()=>perJaar(ids, "users", {archived:"false", isEmployee:"true", fields:naamV}), ()=>zget("users", {archived:"false", isEmployee:"true", fields:naamV}),
+            ()=>perJaar(ids, "contracts", {fields:"employee,firstName,prefix,lastName"}).then(r=>r.map(x=>({...x, code:x.employee})))),
+    probeer(()=>perJaar(ids, "groupindepartments", {fields:"id,name,extendedName"})),
+    probeer(()=>perJaar(ids, "locationofbranches", {fields:"id,name"}), ()=>zget("locationofbranches", {fields:"id,name"}))
+  ]);
+  const naam = u => [u.firstName, u.prefix, u.lastName].filter(Boolean).join(" ");
+  LIJSTEN = {t: Date.now(), school: K.school,
+    lln: lln.map(u=>[String(u.code), naam(u)]), mw: mw.map(u=>[String(u.code), naam(u)]),
+    kl: kl.map(g=>[String(g.id), g.name || "", g.extendedName || ""]), lok: lok.map(l=>[String(l.id), l.name || ""])};
+  opslag.zet("lijsten", LIJSTEN); return LIJSTEN;
+}
+const norm = s => String(s||"").normalize("NFKD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+function zoekIn(q){
+  const L = LIJSTEN || {lln:[],mw:[],kl:[],lok:[]}, ql = norm(q), delen = ql.split(" ");
+  const uit = new Map();
+  const voeg = (soort, code, naam, extra) => {
+    const h = norm(code+" "+naam+" "+(extra||"")); if(!delen.every(d=>h.includes(d))) return;
+    const s = norm(code) === ql ? 0 : norm(naam).startsWith(ql) ? 1 : 2, k = soort+"|"+code;
+    if(!uit.has(k) || uit.get(k).s > s) uit.set(k, {soort, code, naam: naam || code, extra: extra || "", s});
+  };
+  L.lok.forEach(([id,n])=>{ if(norm(n).includes(ql)) voeg("lokaal", id, n); });
+  L.kl.forEach(([id,n,x])=>voeg("klas", id, n, x));
+  L.mw.forEach(([c,n])=>voeg("collega", c, n));
+  L.lln.forEach(([c,n])=>voeg("leerling", c, n));
+  const volg = {lokaal:0, klas:1, collega:2, leerling:3};
+  return [...uit.values()].sort((a,b)=>a.s-b.s || volg[a.soort]-volg[b.soort] || a.naam.localeCompare(b.naam,"nl")).slice(0,40);
+}
+async function rooster(x, van){
+  const start = Math.floor(van.getTime()/1000) - 12*3600, eind = start + 5*86400 + 12*3600;
+  const f = {start, end:eind, valid:"true", fields:"start,end,locations,teachers,groups,subjects,cancelled,startTimeSlotName,changeDescription"};
+  let data;
+  if(x.soort === "lokaal") data = await zget("appointments", {...f, locationsOfBranch:x.code});
+  else if(x.soort === "klas") data = await zget("appointments", {...f, containsStudentsFromGroupInDepartment:x.code});
+  else{
+    try{ data = await zget("appointments", {...f, user:x.code}); }
+    catch(e){
+      if(e.message === "koppeling") throw e;
+      // geen rechten op appointments: via het weekrooster, zoals de webapp
+      const d = new Date(van); const wk = isoWeek(d);
+      data = [];
+      for(const soort of ["student","teacher"]){
+        try{ const b = await zget("liveschedule", {[soort]: x.code, week: wk}); data = b.flatMap(z=>z.appointments||[]); if(data.length) break; }catch(e2){ if(e2.message === "koppeling") throw e2; }
+      }
+      if(!data.length) throw e;
+    }
+  }
+  const uit = {};
+  for(const a of data.sort((p,q)=>p.start-q.start)){
+    const s = new Date(a.start*1000), e = new Date(a.end*1000), k = iso(s);
+    (uit[k] = uit[k] || []).push({start: hm(s), eind: hm(e), s: a.start, e: a.end, uur: a.startTimeSlotName || "",
+      vak: (a.subjects||[]).join(", "), groep: (a.groups||[]).join(", "), lokaal: (a.locations||[]).join(", "),
+      docent: (a.teachers||[]).join(", "), vervalt: !!a.cancelled, wijziging: a.changeDescription || ""});
+  }
+  return uit;
+}
+function isoWeek(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dn = (t.getUTCDay()+6)%7; t.setUTCDate(t.getUTCDate()-dn+3);
+  const j = t.getUTCFullYear(), w1 = new Date(Date.UTC(j,0,4)); return `${j}${String(1+Math.round(((t-w1)/864e5-3+((w1.getUTCDay()+6)%7))/7)).padStart(2,"0")}`; }
+const hm = d => `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+function maandag(d){ const m = new Date(d); m.setHours(12,0,0,0); const wd = (m.getDay()+6)%7; m.setDate(m.getDate()-wd+(wd>=5?7:0)); m.setHours(0,0,0,0); return m; }
+
+// ---------------------------------------------------------------- schermen
+function fout(e){
+  if(e && e.message === "koppeling"){ opslag.weg("koppeling"); K = null; return setup("De koppeling met Zermelo is verlopen. Koppel opnieuw."); }
+  st.fout = e ? e.message : ""; teken();
+}
+function setup(melding){
+  const school = (K && K.school) || opslag.lees("school", "psg");
+  $("#app").innerHTML = `<div class="setup"><h1>Rooster</h1>
+    <p class="hint">Eén keer koppelen met Zermelo. De sleutel blijft alleen op deze telefoon.</p>
+    <ol class="hint"><li>Open in je browser <b>${esc(school)}.zportal.nl</b> en log in.</li>
+      <li>Ga naar <b>Koppelingen → Koppel externe applicatie</b>.</li><li>Vul de code hieronder in.</li></ol>
+    <label for="s">School</label><input id="s" value="${esc(school)}" autocapitalize="off" autocomplete="off">
+    <label for="c">Koppelcode</label><input id="c" inputmode="numeric" autocomplete="one-time-code" placeholder="123 456 789 012">
+    ${melding ? `<div class="fout">${esc(melding)}</div>` : ""}
+    <div style="margin-top:16px"><button class="knop" id="kb" onclick="doeKoppel()">Koppelen</button></div></div>`;
+}
+async function doeKoppel(){
+  const b = $("#kb"); b.disabled = true; b.textContent = "Bezig…";
+  try{ opslag.zet("school", $("#s").value.trim()); await koppel($("#s").value, $("#c").value); await start(); }
+  catch(e){ setup(e.message); }
+}
+async function start(){
+  if(!K) return setup();
+  teken();
+  try{ await lijsten(); st.fout = ""; mijnKlassenLaden(); }catch(e){ return fout(e); }
+  if(st.q) st.res = zoekIn(st.q);
+  teken();
+}
+async function mijnKlassenLaden(){
+  // klassen uit je eigen rooster van deze week, als snelknoppen
+  try{
+    const ma = maandag(new Date()), s = Math.floor(ma/1000), e = s + 7*86400;
+    const r = await zget("appointments", {user:"~me", start:s, end:e, valid:"true", fields:"groups"});
+    const namen = [...new Set(r.flatMap(a=>a.groups||[]))].sort();
+    const L = LIJSTEN || {kl:[]};
+    st.mijnKlassen = namen.map(n=>{ const g = L.kl.find(k=>norm(k[1])===norm(n)); return g ? {soort:"klas", code:g[0], naam:n} : null; }).filter(Boolean);
+    opslag.zet("mijnklassen", st.mijnKlassen); if(!st.sel) teken();
+  }catch(e){}
+}
+let zt = null;
+function zoek(q){ st.q = q; clearTimeout(zt); zt = setTimeout(()=>{ st.res = q.trim().length >= 2 ? zoekIn(q) : []; tekenLijst(); }, 120); }
+function teken(){
+  if(!K) return setup();
+  if(st.sel) return tekenRooster();
+  const laden = !LIJSTEN;
+  $("#app").innerHTML = `<h1>Rooster <button class="klein ik" onclick="toon({soort:'ik',code:'~me',naam:'Mijn rooster'})">Mijn rooster</button></h1>
+    <input id="q" type="search" placeholder="Naam, docentcode, klas of lokaal" value="${esc(st.q)}" oninput="zoek(this.value)" autocomplete="off" autocapitalize="off" ${laden?"disabled":""}>
+    ${st.favs.length ? `<div class="kop">Favorieten</div><div class="chips" style="padding-top:4px">${st.favs.map((f,i)=>`<button class="chip" onclick="toon(st.favs[${i}])">${esc(f.naam)}</button>`).join("")}</div>` : ""}
+    <div id="res"></div>
+    ${st.mijnKlassen.length && !st.q ? `<div class="kop">Mijn klassen</div><div class="chips" style="padding-top:4px">${st.mijnKlassen.map((k,i)=>`<button class="chip" onclick="toon(st.mijnKlassen[${i}])">${esc(k.naam)}</button>`).join("")}</div>` : ""}
+    ${laden ? `<div class="leeg" style="margin-top:12px">Lijsten ophalen uit Zermelo…</div>` : ""}
+    ${st.fout ? `<div class="fout">${esc(st.fout)}</div>` : ""}
+    <div class="voet"><a href="#" onclick="ververs();return false">Lijsten verversen</a> &nbsp;·&nbsp; <a href="#" onclick="ontkoppel();return false">Ontkoppelen</a></div>`;
+  tekenLijst();
+}
+function tekenLijst(){
+  const el = $("#res"); if(!el) return;
+  el.innerHTML = st.res.length ? `<div class="lijst" style="margin-top:10px">${st.res.map((x,i)=>`<button class="rij" onclick="toon(st.res[${i}])"><span class="tag">${esc(x.soort)}</span><b>${esc(x.naam)}</b><span class="x">${esc(x.soort==="leerling"||x.soort==="collega"?x.code:x.extra)}</span></button>`).join("")}</div>`
+    : st.q.trim().length >= 2 && LIJSTEN ? `<div class="leeg" style="margin-top:10px">Niets gevonden</div>` : "";
+}
+async function ververs(){ LIJSTEN = null; teken(); try{ await lijsten(true); }catch(e){ return fout(e); } teken(); }
+function ontkoppel(){ opslag.weg("koppeling"); opslag.weg("lijsten"); K = null; LIJSTEN = null; setup(); }
+function toon(x){ st.sel = x; st.van = maandag(new Date()); const n = new Date(); st.dag = (n.getDay()===0||n.getDay()===6) ? 0 : n.getDay()-1; laad(); }
+async function laad(){
+  st.rooster = null; st.fout = ""; tekenRooster();
+  try{ st.rooster = await rooster(st.sel.soort === "ik" ? {soort:"collega", code:"~me"} : st.sel, st.van); }
+  catch(e){ if(e.message === "koppeling") return fout(e); st.rooster = {}; st.fout = e.message === "Geen rechten" ? "Geen rechten om dit rooster te zien." : e.message; }
+  tekenRooster();
+}
+function week(d){ const v = new Date(st.van); v.setDate(v.getDate()+7*d); st.van = v; laad(); }
+function isFav(x){ return st.favs.some(f=>f.soort===x.soort && String(f.code)===String(x.code)); }
+function wisselFav(){
+  const x = st.sel; if(x.soort === "ik") return;
+  st.favs = isFav(x) ? st.favs.filter(f=>!(f.soort===x.soort && String(f.code)===String(x.code))) : st.favs.concat({soort:x.soort, code:x.code, naam:x.naam});
+  opslag.zet("favorieten", st.favs); tekenRooster();
+}
+function tekenRooster(){
+  const x = st.sel, vandaag = iso(new Date()), nu = Date.now()/1000;
+  const dagen = [...Array(5).keys()].map(i=>{ const d = new Date(st.van); d.setDate(d.getDate()+i); return d; });
+  const dag = dagen[st.dag], lessen = st.rooster ? (st.rooster[iso(dag)] || []) : null;
+  $("#app").innerHTML = `<div class="wie"><button class="klein" onclick="st.sel=null;teken()">‹ Zoeken</button><h2>${esc(x.naam||x.code)}</h2>
+      ${x.soort!=="ik"?`<button class="ster ${isFav(x)?"on":""}" onclick="wisselFav()" aria-label="Favoriet">${isFav(x)?"★":"☆"}</button>`:""}</div>
+    <div class="dagen"><button class="pijl" onclick="week(-1)" aria-label="Vorige week">‹</button>${dagen.map((d,i)=>`<button class="${i===st.dag?"on":""} ${iso(d)===vandaag?"vandaag":""}" onclick="st.dag=${i};tekenRooster()">${DAG[d.getDay()]}<br>${d.getDate()}</button>`).join("")}<button class="pijl" onclick="week(1)" aria-label="Volgende week">›</button></div>
+    ${st.fout ? `<div class="fout">${esc(st.fout)}</div>` : ""}
+    ${lessen === null ? `<div class="leeg">Laden…</div>` : !lessen.length ? (st.fout ? "" : `<div class="leeg">Geen lessen op ${DAG[dag.getDay()]} ${dag.getDate()}</div>`) :
+      lessen.map(l=>`<div class="les ${l.vervalt?"weg":""} ${l.s<=nu&&nu<l.e?"nu":""}"><div class="t">${esc(l.start)}<small>${esc(l.eind)}</small></div>
+        <div><div class="w">${esc(l.vak.toUpperCase())} ${esc(l.groep)}${l.uur?` <span class="uur">${esc(l.uur)}e uur</span>`:""}</div><div class="d">${[l.lokaal, l.docent].filter(Boolean).map(esc).join(" · ")}</div>
+        ${l.vervalt?`<span class="wijz">vervalt</span>`:l.wijziging?`<span class="wijz">${esc(l.wijziging)}</span>`:""}</div></div>`).join("")}`;
+}
+start();
+</script>
+</body>
+</html>
