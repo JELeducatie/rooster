@@ -35,6 +35,13 @@ button{font:inherit;cursor:pointer;color:inherit}
 .rij:last-child{border-bottom:0}
 .rij .tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--c);background:var(--cb);border-radius:6px;padding:3px 7px;flex:none}
 .rij b{font-weight:800} .rij span.x{margin-left:auto;color:var(--muted);font-size:14px;white-space:nowrap}
+.favgroep{margin:8px 2px 0}
+.favgroep > span{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 2px 6px}
+.favchips{display:flex;gap:8px;flex-wrap:wrap}
+.les.keuze{cursor:pointer;border-style:dashed}
+.les .meer{font-size:13px;font-weight:700;color:var(--c);margin-top:6px}
+.les .opties{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:14px}
+.les .opties span{display:block;color:var(--muted);font-size:13px}
 .wie{display:flex;align-items:center;gap:10px;margin:6px 2px 12px}
 .wie h2{margin:0;font-size:22px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ster{border:0;background:none;font-size:26px;line-height:1;padding:4px 6px;color:var(--muted)}
@@ -227,16 +234,25 @@ function zoek(q){ st.q = q; clearTimeout(zt); zt = setTimeout(()=>{ st.res = q.t
 function teken(){
   if(!K) return setup();
   if(st.sel) return tekenRooster();
+  if(st.q.trim().length < 2) st.res = [];
   const laden = !LIJSTEN;
   $("#app").innerHTML = `<h1>Rooster <button class="klein ik" onclick="toon({soort:'ik',code:'~me',naam:'Mijn rooster'})">Mijn rooster</button></h1>
     <input id="q" type="search" placeholder="Naam, docentcode, klas of lokaal" value="${esc(st.q)}" oninput="zoek(this.value)" autocomplete="off" autocapitalize="off" ${laden?"disabled":""}>
-    ${st.favs.length ? `<div class="kop">Favorieten</div><div class="chips" style="padding-top:4px">${st.favs.map((f,i)=>`<button class="chip" onclick="toon(st.favs[${i}])">${esc(f.naam)}</button>`).join("")}</div>` : ""}
+    ${favsHtml()}
     <div id="res"></div>
     ${st.mijnKlassen.length && !st.q ? `<div class="kop">Mijn klassen</div><div class="chips" style="padding-top:4px">${st.mijnKlassen.map((k,i)=>`<button class="chip" onclick="toon(st.mijnKlassen[${i}])">${esc(k.naam)}</button>`).join("")}</div>` : ""}
     ${laden ? `<div class="leeg" style="margin-top:12px">Lijsten ophalen uit Zermelo…</div>` : ""}
     ${st.fout ? `<div class="fout">${esc(st.fout)}</div>` : ""}
     <div class="voet"><a href="#" onclick="ververs();return false">Lijsten verversen</a> &nbsp;·&nbsp; <a href="#" onclick="ontkoppel();return false">Ontkoppelen</a></div>`;
   tekenLijst();
+}
+function favsHtml(){
+  if(!st.favs.length) return "";
+  const groepen = [["klas","Klassen"],["collega","Docenten"],["lokaal","Lokalen"],["leerling","Leerlingen"]];
+  return `<div class="kop">Favorieten</div>` + groepen.map(([soort, titel])=>{
+    const f = st.favs.map((x,i)=>({...x, i})).filter(x=>x.soort===soort).sort((a,b)=>String(a.naam).localeCompare(String(b.naam),"nl",{numeric:true}));
+    return f.length ? `<div class="favgroep"><span>${titel}</span><div class="favchips">${f.map(x=>`<button class="chip" onclick="toon(st.favs[${x.i}])">${esc(x.naam)}</button>`).join("")}</div></div>` : "";
+  }).join("");
 }
 function tekenLijst(){
   const el = $("#res"); if(!el) return;
@@ -268,10 +284,40 @@ function tekenRooster(){
     <div class="dagen"><button class="pijl" onclick="week(-1)" aria-label="Vorige week">‹</button>${dagen.map((d,i)=>`<button class="${i===st.dag?"on":""} ${iso(d)===vandaag?"vandaag":""}" onclick="st.dag=${i};tekenRooster()">${DAG[d.getDay()]}<br>${d.getDate()}</button>`).join("")}<button class="pijl" onclick="week(1)" aria-label="Volgende week">›</button></div>
     ${st.fout ? `<div class="fout">${esc(st.fout)}</div>` : ""}
     ${lessen === null ? `<div class="leeg">Laden…</div>` : !lessen.length ? (st.fout ? "" : `<div class="leeg">Geen lessen op ${DAG[dag.getDay()]} ${dag.getDate()}</div>`) :
-      lessen.map(l=>`<div class="les ${l.vervalt?"weg":""} ${l.s<=nu&&nu<l.e?"nu":""}"><div class="t">${esc(l.start)}<small>${esc(l.eind)}</small></div>
-        <div><div class="w">${esc(l.vak.toUpperCase())} ${esc(l.groep)}${l.uur?` <span class="uur">${esc(l.uur)}e uur</span>`:""}</div><div class="d">${[l.lokaal, l.docent].filter(Boolean).map(esc).join(" · ")}</div>
-        ${l.vervalt?`<span class="wijz">vervalt</span>`:l.wijziging?`<span class="wijz">${esc(l.wijziging)}</span>`:""}</div></div>`).join("")}`;
+      ordenen(x, lessen).map(l=>l.keuze ? keuzeHtml(l, nu) : lesHtml(l, nu)).join("")}`;
 }
+function lesHtml(l, nu){
+  return `<div class="les ${l.vervalt?"weg":""} ${l.s<=nu&&nu<l.e?"nu":""}"><div class="t">${esc(l.start)}<small>${esc(l.eind)}</small></div>
+    <div><div class="w">${esc(l.vak.toUpperCase())} ${esc(l.groep)}${l.uur?` <span class="uur">${esc(l.uur)}e uur</span>`:""}</div><div class="d">${[l.lokaal, l.docent].filter(Boolean).map(esc).join(" · ")}</div>
+    ${l.vervalt?`<span class="wijz">vervalt</span>`:l.wijziging?`<span class="wijz">${esc(l.wijziging)}</span>`:""}</div></div>`;
+}
+// Klasrooster: lessen waar maar een deel van de klas heen gaat (keuzelessen) op hetzelfde tijdstip
+// samen in één blok, in plaats van alle mogelijkheden los onder elkaar.
+const KEUZE_OPEN = new Set();
+function ordenen(x, lessen){
+  if(x.soort !== "klas") return lessen;
+  const namen = [x.naam, x.extra].filter(Boolean).map(norm);
+  const vanKlas = l => (l.groep||"").split(",").map(norm).some(g=>namen.includes(g));
+  const blokken = new Map();
+  for(const l of lessen){ const k = l.s+"-"+l.e; (blokken.get(k) || blokken.set(k, []).get(k)).push(l); }
+  const uit = [];
+  for(const [k, ls] of blokken){
+    const eigen = ls.filter(vanKlas), rest = ls.filter(l=>!vanKlas(l));
+    uit.push(...eigen);
+    if(rest.length >= 2 && !eigen.length) uit.push({keuze:true, k, s:rest[0].s, e:rest[0].e, start:rest[0].start, eind:rest[0].eind, uur:rest[0].uur, opties:rest});
+    else uit.push(...rest);
+  }
+  return uit.sort((a,b)=>a.s-b.s);
+}
+function keuzeHtml(b, nu){
+  const open = KEUZE_OPEN.has(b.k), vakken = [...new Set(b.opties.map(o=>o.vak.toUpperCase()).filter(Boolean))];
+  return `<div class="les keuze ${b.s<=nu&&nu<b.e?"nu":""}" onclick="wisselKeuze('${b.k}')"><div class="t">${esc(b.start)}<small>${esc(b.eind)}</small></div>
+    <div><div class="w">Keuzeles${b.uur?` <span class="uur">${esc(b.uur)}e uur</span>`:""}</div>
+      <div class="d">${b.opties.length} mogelijkheden${vakken.length<=4?" · "+vakken.map(esc).join(", "):""}</div>
+      <div class="meer">${open?"Verberg ▴":"Toon alle ▾"}</div>
+      ${open?`<div class="opties">${b.opties.map(o=>`<div><b>${esc(o.vak.toUpperCase())}</b> ${esc(o.groep)}<span>${[o.lokaal, o.docent].filter(Boolean).map(esc).join(" · ")}</span></div>`).join("")}</div>`:""}</div></div>`;
+}
+function wisselKeuze(k){ KEUZE_OPEN.has(k) ? KEUZE_OPEN.delete(k) : KEUZE_OPEN.add(k); tekenRooster(); }
 start();
 </script>
 </body>
